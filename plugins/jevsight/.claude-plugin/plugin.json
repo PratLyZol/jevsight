@@ -1,0 +1,40 @@
+{
+  "name": "jevsight",
+  "version": "0.2.0",
+  "description": "Speculative tool execution for Claude Code. Jev predicts your agent's next shell command or MCP call and Jevsight runs it early when the odds say it pays. Wrap any stdio MCP server with bin/mcp_proxy.py.",
+  "author": { "name": "Pratishrut Kamal" },
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Jev API key",
+      "description": "OpenRouter or TypeSafe API key used for Jev predictions",
+      "sensitive": true
+    },
+    "provider": {
+      "type": "string",
+      "title": "Jev provider",
+      "description": "vercel, openrouter or typesafe (default: whichever key is set)"
+    },
+    "mode": {
+      "type": "string",
+      "title": "Mode",
+      "description": "shadow (predict and log only), on (run guesses early), or off",
+      "default": "shadow"
+    },
+    "alpha": {
+      "type": "number",
+      "title": "Waste price",
+      "description": "How much a wasted worker-second costs relative to a saved second. Lower means more speculation.",
+      "default": 0.25,
+      "min": 0,
+      "max": 5
+    },
+    "extra_commands": {
+      "type": "string",
+      "title": "Extra safe commands",
+      "description": "Command prefixes that are safe to run early, such as npm test. Your Bash allow rules are used too.",
+      "multiple": true,
+      "default": []
+    }
+  }
+}

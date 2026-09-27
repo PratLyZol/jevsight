@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/bin/hook.py", "UserPromptSubmit"], "timeout": 5 } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/bin/hook.py", "PreToolUse"], "timeout": 5 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/bin/hook.py", "PostToolUse"], "timeout": 5 } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/bin/hook.py", "PostToolUseFailure"], "timeout": 5 } ] }
+    ]
+  }
+}

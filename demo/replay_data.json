@@ -1,0 +1,1166 @@
+{
+ "title": "Claude API loop vs Claude + Jev loop",
+ "task": "Using only the fetch tool, write a markdown cheat sheet of Python's asyncio high-level API from these pages, read in this order, one fetch at a time: https://docs.python.org/3/library/asyncio.html, https://docs.python.org/3/library/asyncio-runner.html, https://docs.python.org/3/library/asyncio-task.html, https://docs.python.org/3/library/asyncio-stream.html, https://docs.python.org/3/library/asyncio-sync.html, https://docs.python.org/3/library/asyncio-subprocess.html, https://docs.python.org/3/library/asyncio-queue.html. When a page comes back truncated, fetch the rest of it (with the start_index the tool suggests) before moving to the next page. The cheat sheet needs one section per page with the main functions and classes, each with a one-line description, and a closing section on which primitives to reach for first. Read only; do not fetch anything else.",
+ "model": "claude-opus-5-5",
+ "what_differs": {
+  "claude": "Claude decides every tool call: one model turn per call.",
+  "claude_plus_jev": "After each tool result Jev (a calibrated classifier, ~0.4s) is asked which call comes next; if its probability clears 0.5 the loop executes that call itself and Claude never spends a turn on it. Claude gets the turn back when Jev is unsure."
+ },
+ "segment_kinds": {
+  "think": "Claude deciding the next call (a model turn)",
+  "tool": "a fetch in flight; who=claude asked for it, who=jev committed it without a Claude turn",
+  "jev": "a Jev prediction call",
+  "write": "Claude writing the final cheat sheet"
+ },
+ "pairs": [
+  {
+   "pair": 1,
+   "claude": {
+    "run": "loop-20260926-032658-llm",
+    "segments": [
+     {
+      "s": 0.26,
+      "e": 3.57,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 3.57,
+      "e": 4.51,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 4.51,
+      "e": 6.57,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 6.57,
+      "e": 7.14,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\"}"
+     },
+     {
+      "s": 7.14,
+      "e": 9.51,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 9.51,
+      "e": 10.07,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"start_index\": 5000}"
+     },
+     {
+      "s": 10.07,
+      "e": 13.91,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 13.91,
+      "e": 14.75,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\"}"
+     },
+     {
+      "s": 14.75,
+      "e": 18.11,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 5: decides next call",
+      "text": ""
+     },
+     {
+      "s": 18.11,
+      "e": 18.95,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 5000, \"max_length\": 40000}"
+     },
+     {
+      "s": 18.95,
+      "e": 22.49,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 6: decides next call",
+      "text": ""
+     },
+     {
+      "s": 22.49,
+      "e": 23.35,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +45000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 45000, \"max_length\": 40000}"
+     },
+     {
+      "s": 23.35,
+      "e": 26.47,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 7: decides next call",
+      "text": ""
+     },
+     {
+      "s": 26.47,
+      "e": 27.09,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 27.09,
+      "e": 30.19,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 8: decides next call",
+      "text": ""
+     },
+     {
+      "s": 30.19,
+      "e": 30.82,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 30.82,
+      "e": 34.05,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 9: decides next call",
+      "text": ""
+     },
+     {
+      "s": 34.05,
+      "e": 34.63,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 34.63,
+      "e": 37.77,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 10: decides next call",
+      "text": ""
+     },
+     {
+      "s": 37.77,
+      "e": 38.33,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 38.32,
+      "e": 91.94,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 11: writes the cheat sheet",
+      "text": "# Python asyncio high-level API: cheat sheet\n\n*Taken from the Python 3 docs (the current 3.14 version), read in the order you gave. Two pages came back cut off:"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 10,
+     "thinking_s": 31.07,
+     "tool_wait_s": 6.99,
+     "jev_s": 0.0,
+     "write_up_s": 53.61,
+     "tool_calls": 10,
+     "jev_commits": 0,
+     "wall_s": 91.94,
+     "claude_turns": 11,
+     "input_tokens": 261621,
+     "output_tokens": 7196,
+     "jev_declined": 0,
+     "jev_errors": 0,
+     "navigation_phase_s": 38.06
+    }
+   },
+   "claude_plus_jev": {
+    "run": "loop-20260926-033045-jev",
+    "segments": [
+     {
+      "s": 0.26,
+      "e": 2.88,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 2.88,
+      "e": 3.72,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 3.72,
+      "e": 4.21,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.81 {\"url\":\"https://docs.python.org/3/library/asyncio-runn",
+      "p": 0.812
+     },
+     {
+      "s": 4.21,
+      "e": 4.74,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 4.74,
+      "e": 5.13,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.38 {\"max_length\":40000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.376
+     },
+     {
+      "s": 5.13,
+      "e": 7.59,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 7.59,
+      "e": 8.45,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 8.44,
+      "e": 8.82,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.40 {\"url\":\"https://docs.python.org/3/library/asyncio-stre",
+      "p": 0.396
+     },
+     {
+      "s": 8.82,
+      "e": 12.2,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 12.2,
+      "e": 12.85,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 12.85,
+      "e": 13.32,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.64 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.643
+     },
+     {
+      "s": 13.32,
+      "e": 13.93,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 13.93,
+      "e": 14.27,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.60 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.604
+     },
+     {
+      "s": 14.27,
+      "e": 14.87,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 14.87,
+      "e": 15.23,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.72 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.723
+     },
+     {
+      "s": 15.23,
+      "e": 19.38,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 19.38,
+      "e": 19.95,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 19.95,
+      "e": 20.38,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.06 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.058
+     },
+     {
+      "s": 20.38,
+      "e": 68.69,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 5: writes the cheat sheet",
+      "text": "# Python asyncio high-level API cheat sheet\n\nI read all seven pages in the order you gave. I set a large `max_length` on each fetch, so none of them came back t"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 4,
+     "thinking_s": 12.59,
+     "tool_wait_s": 4.66,
+     "jev_s": 2.87,
+     "write_up_s": 48.31,
+     "tool_calls": 7,
+     "jev_commits": 3,
+     "wall_s": 68.69,
+     "claude_turns": 5,
+     "input_tokens": 140015,
+     "output_tokens": 6268,
+     "jev_declined": 4,
+     "jev_errors": 0,
+     "navigation_phase_s": 20.12
+    }
+   }
+  },
+  {
+   "pair": 2,
+   "claude": {
+    "run": "loop-20260926-033612-llm",
+    "segments": [
+     {
+      "s": 0.25,
+      "e": 2.72,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 2.72,
+      "e": 3.61,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 3.61,
+      "e": 5.68,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 5.68,
+      "e": 6.21,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\"}"
+     },
+     {
+      "s": 6.21,
+      "e": 8.35,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 8.35,
+      "e": 8.88,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"start_index\": 5000}"
+     },
+     {
+      "s": 8.88,
+      "e": 13.02,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 13.02,
+      "e": 13.84,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\"}"
+     },
+     {
+      "s": 13.84,
+      "e": 14.62,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 5000}"
+     },
+     {
+      "s": 14.62,
+      "e": 17.51,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 5: decides next call",
+      "text": ""
+     },
+     {
+      "s": 17.51,
+      "e": 18.35,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +10000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 10000, \"max_length\": 40000}"
+     },
+     {
+      "s": 18.35,
+      "e": 21.6,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 6: decides next call",
+      "text": ""
+     },
+     {
+      "s": 21.6,
+      "e": 22.44,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +50000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 50000, \"max_length\": 40000}"
+     },
+     {
+      "s": 22.44,
+      "e": 25.67,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 7: decides next call",
+      "text": ""
+     },
+     {
+      "s": 25.67,
+      "e": 26.31,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 26.31,
+      "e": 29.02,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 8: decides next call",
+      "text": ""
+     },
+     {
+      "s": 29.02,
+      "e": 29.62,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 29.62,
+      "e": 32.54,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 9: decides next call",
+      "text": ""
+     },
+     {
+      "s": 32.54,
+      "e": 33.14,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 33.14,
+      "e": 36.1,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 10: decides next call",
+      "text": ""
+     },
+     {
+      "s": 36.1,
+      "e": 36.66,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 36.67,
+      "e": 90.89,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 11: writes the cheat sheet",
+      "text": "# Python asyncio high-level API cheat sheet\n\nThis covers the seven pages in the order you gave. I fetched each one fully, including the rest of any page that ca"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 10,
+     "thinking_s": 28.78,
+     "tool_wait_s": 7.63,
+     "jev_s": 0.0,
+     "write_up_s": 54.22,
+     "tool_calls": 11,
+     "jev_commits": 0,
+     "wall_s": 90.89,
+     "claude_turns": 11,
+     "input_tokens": 266889,
+     "output_tokens": 7485,
+     "jev_declined": 0,
+     "jev_errors": 0,
+     "navigation_phase_s": 36.41
+    }
+   },
+   "claude_plus_jev": {
+    "run": "loop-20260926-033612-jev",
+    "segments": [
+     {
+      "s": 0.55,
+      "e": 2.6,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 2.6,
+      "e": 3.41,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 3.41,
+      "e": 3.85,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.82 {\"url\":\"https://docs.python.org/3/library/asyncio-runn",
+      "p": 0.822
+     },
+     {
+      "s": 3.85,
+      "e": 4.49,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 4.5,
+      "e": 4.86,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.32 {\"max_length\":40000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.317
+     },
+     {
+      "s": 4.86,
+      "e": 8.2,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 8.2,
+      "e": 9.03,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 9.03,
+      "e": 9.45,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.34 {\"url\":\"https://docs.python.org/3/library/asyncio-stre",
+      "p": 0.337
+     },
+     {
+      "s": 9.45,
+      "e": 12.8,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 12.81,
+      "e": 13.4,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 13.4,
+      "e": 13.72,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.66 {\"max_length\":100000,\"url\":\"https://docs.python.org/3/",
+      "p": 0.663
+     },
+     {
+      "s": 13.72,
+      "e": 14.31,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 14.31,
+      "e": 14.67,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.67 {\"max_length\":100000,\"url\":\"https://docs.python.org/3/",
+      "p": 0.673
+     },
+     {
+      "s": 14.67,
+      "e": 15.24,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 15.24,
+      "e": 15.59,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.66 {\"max_length\":100000,\"url\":\"https://docs.python.org/3/",
+      "p": 0.663
+     },
+     {
+      "s": 15.59,
+      "e": 19.79,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 19.79,
+      "e": 20.33,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 20.33,
+      "e": 20.71,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.08 {\"max_length\":100000,\"url\":\"https://docs.python.org/3/",
+      "p": 0.076
+     },
+     {
+      "s": 20.71,
+      "e": 70.58,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 5: writes the cheat sheet",
+      "text": "# Python asyncio high-level API cheat sheet\n\nThis covers the seven pages you listed, read in order. Each one came back whole in a single fetch (I set a large `m"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 4,
+     "thinking_s": 12.95,
+     "tool_wait_s": 4.58,
+     "jev_s": 2.63,
+     "write_up_s": 49.87,
+     "tool_calls": 7,
+     "jev_commits": 3,
+     "wall_s": 70.58,
+     "claude_turns": 5,
+     "input_tokens": 140047,
+     "output_tokens": 6416,
+     "jev_declined": 4,
+     "jev_errors": 0,
+     "navigation_phase_s": 20.16
+    }
+   }
+  },
+  {
+   "pair": 3,
+   "claude": {
+    "run": "loop-20260926-034357-llm",
+    "segments": [
+     {
+      "s": 0.26,
+      "e": 2.77,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 2.77,
+      "e": 3.93,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 3.93,
+      "e": 6.98,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 6.98,
+      "e": 7.55,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\"}"
+     },
+     {
+      "s": 7.55,
+      "e": 9.85,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 9.85,
+      "e": 10.57,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-runner.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"start_index\": 5000}"
+     },
+     {
+      "s": 10.57,
+      "e": 12.71,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 12.71,
+      "e": 13.62,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\"}"
+     },
+     {
+      "s": 13.62,
+      "e": 17.63,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 5: decides next call",
+      "text": ""
+     },
+     {
+      "s": 17.63,
+      "e": 18.55,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +5000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 5000, \"max_length\": 40000}"
+     },
+     {
+      "s": 18.55,
+      "e": 22.64,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 6: decides next call",
+      "text": ""
+     },
+     {
+      "s": 22.64,
+      "e": 23.54,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html +45000",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"start_index\": 45000, \"max_length\": 40000}"
+     },
+     {
+      "s": 23.54,
+      "e": 26.94,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 7: decides next call",
+      "text": ""
+     },
+     {
+      "s": 26.95,
+      "e": 27.62,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 27.62,
+      "e": 30.6,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 8: decides next call",
+      "text": ""
+     },
+     {
+      "s": 30.61,
+      "e": 31.26,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 31.26,
+      "e": 34.21,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 9: decides next call",
+      "text": ""
+     },
+     {
+      "s": 34.22,
+      "e": 34.82,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 34.82,
+      "e": 38.83,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 10: decides next call",
+      "text": ""
+     },
+     {
+      "s": 38.83,
+      "e": 39.56,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 39.56,
+      "e": 85.92,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 11: writes the cheat sheet",
+      "text": "# Python asyncio high-level API cheat sheet\n\nI read all seven pages in order. When a page was cut off, I fetched the rest starting at the suggested `start_index"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 10,
+     "thinking_s": 31.44,
+     "tool_wait_s": 7.85,
+     "jev_s": 0.0,
+     "write_up_s": 46.35,
+     "tool_calls": 10,
+     "jev_commits": 0,
+     "wall_s": 85.92,
+     "claude_turns": 11,
+     "input_tokens": 261489,
+     "output_tokens": 6523,
+     "jev_declined": 0,
+     "jev_errors": 0,
+     "navigation_phase_s": 39.29
+    }
+   },
+   "claude_plus_jev": {
+    "run": "loop-20260926-034357-jev",
+    "segments": [
+     {
+      "s": 0.41,
+      "e": 2.87,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 1: decides next call",
+      "text": ""
+     },
+     {
+      "s": 2.86,
+      "e": 3.91,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio.html\"}"
+     },
+     {
+      "s": 3.91,
+      "e": 4.47,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.84 {\"url\":\"https://docs.python.org/3/library/asyncio-runn",
+      "p": 0.842
+     },
+     {
+      "s": 4.47,
+      "e": 5.01,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-runner.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-runner.html\", \"max_length\": 40000}"
+     },
+     {
+      "s": 5.01,
+      "e": 5.34,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.32 {\"max_length\":40000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.317
+     },
+     {
+      "s": 5.34,
+      "e": 7.36,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 2: decides next call",
+      "text": ""
+     },
+     {
+      "s": 7.36,
+      "e": 8.23,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-task.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-task.html\", \"max_length\": 100000}"
+     },
+     {
+      "s": 8.23,
+      "e": 8.6,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.41 {\"url\":\"https://docs.python.org/3/library/asyncio-stre",
+      "p": 0.406
+     },
+     {
+      "s": 8.6,
+      "e": 11.96,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 3: decides next call",
+      "text": ""
+     },
+     {
+      "s": 11.96,
+      "e": 12.59,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-stream.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-stream.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 12.59,
+      "e": 12.98,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.58 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.584
+     },
+     {
+      "s": 12.98,
+      "e": 13.58,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-sync.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-sync.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 13.58,
+      "e": 13.89,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.61 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.614
+     },
+     {
+      "s": 13.89,
+      "e": 14.47,
+      "kind": "tool",
+      "who": "jev",
+      "label": "fetch asyncio-subprocess.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-subprocess.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 14.47,
+      "e": 14.8,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.38 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.376
+     },
+     {
+      "s": 14.8,
+      "e": 20.25,
+      "kind": "think",
+      "who": "claude",
+      "label": "Claude turn 4: decides next call",
+      "text": ""
+     },
+     {
+      "s": 20.25,
+      "e": 20.8,
+      "kind": "tool",
+      "who": "claude",
+      "label": "fetch asyncio-queue.html",
+      "detail": "{\"url\": \"https://docs.python.org/3/library/asyncio-queue.html\", \"max_length\": 60000}"
+     },
+     {
+      "s": 20.8,
+      "e": 21.17,
+      "kind": "jev",
+      "who": "jev",
+      "label": "Jev p=0.06 {\"max_length\":60000,\"url\":\"https://docs.python.org/3/l",
+      "p": 0.064
+     },
+     {
+      "s": 21.17,
+      "e": 75.5,
+      "kind": "write",
+      "who": "claude",
+      "label": "Claude turn 5: writes the cheat sheet",
+      "text": "# Python asyncio high-level API cheat sheet\n\nThis covers the seven pages you listed, read in order. They are the Python 3.14 docs. I fetched each page with a la"
+     }
+    ],
+    "breakdown": {
+     "navigation_turns": 4,
+     "thinking_s": 13.28,
+     "tool_wait_s": 4.8,
+     "jev_s": 2.67,
+     "write_up_s": 54.33,
+     "tool_calls": 7,
+     "jev_commits": 3,
+     "wall_s": 75.51,
+     "claude_turns": 5,
+     "input_tokens": 140041,
+     "output_tokens": 6837,
+     "jev_declined": 4,
+     "jev_errors": 0,
+     "navigation_phase_s": 20.75
+    }
+   }
+  }
+ ],
+ "means": {
+  "claude": {
+   "wall_s": 89.58,
+   "claude_turns": 11,
+   "navigation_turns": 10,
+   "thinking_s": 30.43,
+   "tool_wait_s": 7.49,
+   "tool_calls": 10.33,
+   "jev_s": 0.0,
+   "navigation_phase_s": 37.92,
+   "write_up_s": 51.39,
+   "input_tokens": 263333,
+   "output_tokens": 7068,
+   "jev_commits": 0,
+   "jev_declined": 0,
+   "jev_errors": 0
+  },
+  "claude_plus_jev": {
+   "wall_s": 71.59,
+   "claude_turns": 5,
+   "navigation_turns": 4,
+   "thinking_s": 12.94,
+   "tool_wait_s": 4.68,
+   "tool_calls": 7,
+   "jev_s": 2.72,
+   "navigation_phase_s": 20.34,
+   "write_up_s": 50.84,
+   "input_tokens": 140034.33,
+   "output_tokens": 6507,
+   "jev_commits": 3,
+   "jev_declined": 4,
+   "jev_errors": 0
+  }
+ },
+ "deltas": {
+  "wall_pct_lower": 20,
+  "navigation_phase_pct_lower": 46,
+  "claude_turns_pct_fewer": 55,
+  "input_tokens_pct_fewer": 47,
+  "write_up_s_difference": -0.5
+ },
+ "notes": [
+  "All times in seconds from each run's start; every number comes from trace.jsonl and result.json of the named runs.",
+  "The write-up turn is the same work on both sides (~51s) and swings ~8s run to run; the navigation phase is the part Jev acts on.",
+  "No prompt caching in either driver. Same model, same prompt, same seven pages; every answer named all seven pages."
+ ]
+}

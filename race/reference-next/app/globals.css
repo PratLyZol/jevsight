@@ -1,0 +1,170 @@
+:root {
+  --bg: #f7f7f5;
+  --panel: #ffffff;
+  --text: #1d1d1b;
+  --muted: #6b6b66;
+  --line: #e2e2dc;
+  --accent: #2f6fdb;
+  --ok: #2e8b57;
+  --warning: #d98e04;
+  --over: #c8372d;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+nav strong {
+  margin-right: 12px;
+}
+
+nav a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+form.row,
+div.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--muted);
+  gap: 4px;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+}
+
+textarea {
+  width: 100%;
+  min-height: 180px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button.link {
+  background: none;
+  border: none;
+  color: var(--over);
+  padding: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  color: var(--over);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.stat b {
+  display: block;
+  font-size: 22px;
+}
+
+.bar {
+  height: 10px;
+  background: var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+}
+
+.bar-ok {
+  background: var(--ok);
+}
+
+.bar-warning {
+  background: var(--warning);
+}
+
+.bar-over {
+  background: var(--over);
+}

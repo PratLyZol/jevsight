@@ -1,0 +1,8 @@
+node_modules
+.env
+race/results/
+__pycache__/
+*.pyc
+.next/
+.DS_Store
+web/next-env.d.ts

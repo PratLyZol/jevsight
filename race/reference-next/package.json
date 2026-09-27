@@ -1,0 +1,37 @@
+{
+  "name": "expense-tracker-next",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "next build",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "dev": "next dev",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.3.6",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.11.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "vite": "7.3.6"
+  }
+}

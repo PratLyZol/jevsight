@@ -1,0 +1,235 @@
+{
+  "race-20260926-000107-1": {
+    "base": {
+      "finished": true,
+      "wall_s": 76.735,
+      "model_s": 54.202,
+      "other_s": 22.533,
+      "turns": 32,
+      "cost_usd": 0.6264292,
+      "tools": {
+        "Bash": 9,
+        "Read": 10,
+        "Edit": 12
+      },
+      "bash": [
+        "ls -a .claude 2>/dev/null; git ls-files; cat package.json; npm run check 2>&1 | tail -60",
+        "cat .claude/settings.json SPEC.md \"app/api/expenses/[id]/route.ts\" lib/budgets.ts lib/expenses.ts lib/http.ts",
+        "python3 - <<'EOF'\nimport re\np='app/api/expenses/[id]/route.ts'; s=open(p).read()\ns=s.replace(\"store.remove(id)\",\"store.remove(num)\"); open(p,'w').write(s)\np='lib/budgets.ts'; s=open(p).read()\ns=s.replace(\"if (spent > budget) alert\",\"if (spent >= budget) alert\")\ns=s.replace(\"      spentCents: spent,\\n\",\"      spentCents: spent,\\n      remainingCents: budget - spent,\\n\")\nopen(p,'w').write(s)\np='lib/expenses.ts'; s=open(p).read()\ns=s.replace(\"get(id: number): Expense {\",\"get(id: number): Expense | undefined {\"); open(p,'w').write(s)\nEOF\nnpm run check 2>&1 | grep -vE \"^\\s*$\" | tail -60",
+        "npm run check 2>&1 | tail -70",
+        "npm run check 2>&1 | tail -70",
+        "npx vitest run 2>&1 | grep -E \"FAIL|AssertionError|Error:\" ",
+        "npm run check 2>&1 | tail -40",
+        "npm run check 2>&1 | tail -25; echo \"EXIT ${pipestatus[1]}\"",
+        "npm run check"
+      ],
+      "waits": [
+        [
+          "ls -a .claude 2>/dev/null; git ls-files; cat package.json; npm run check",
+          1.09
+        ],
+        [
+          "cat .claude/settings.json SPEC.md \"app/api/expenses/[id]/route.ts\" lib/budgets.ts lib/expenses.ts lib/http.ts",
+          1.07
+        ],
+        [
+          "python3 - <<'EOF' import re p='app/api/expenses/[id]/route.ts'; s=open(p).read() s=s.replace(\"store.remove(id)\",\"store.remove(num)\"); open(p,'w').write(s) p='lib/budgets.ts'; s=open(p).read() s=s.replace(\"if (spent > budget) alert\",\"if (spent >= budget) alert\") s=s.replace(\" spentCents: spent,\\n\",\" spentCents: spent,\\n remainingCents: budget - spent,\\n\") open(p,'w').write(s) p='lib/expenses.ts'; s=open(p).read() s=s.replace(\"get(id: number): Expense {\",\"get(id: number): Expense | undefined {\"); open(p,'w').write(s) EOF npm run check 2>&1 | grep -vE \"^\\s*$\"",
+          2.3
+        ],
+        [
+          "npm run check",
+          1.27
+        ],
+        [
+          "npm run check",
+          4.55
+        ],
+        [
+          "npx vitest run 2>&1 | grep -E \"FAIL|AssertionError|Error:\"",
+          2.48
+        ],
+        [
+          "npm run check",
+          9.23
+        ],
+        [
+          "npm run check 2>&1 | tail -25; echo \"EXIT ${pipestatus[1]}\"",
+          1.62
+        ],
+        [
+          "npm run check",
+          6.01
+        ]
+      ],
+      "wait_total_s": 29.62
+    },
+    "jev": {
+      "finished": true,
+      "wall_s": 72.198,
+      "model_s": 48.156,
+      "other_s": 24.041999999999994,
+      "turns": 28,
+      "cost_usd": 0.593652,
+      "tools": {
+        "Bash": 8,
+        "Read": 7,
+        "Edit": 12
+      },
+      "bash": [
+        "ls -a && cat package.json && ls .claude 2>/dev/null; git ls-files; npm run check 2>&1 | tail -60",
+        "cat .claude/settings.json SPEC.md \"app/api/expenses/[id]/route.ts\" lib/budgets.ts lib/expenses.ts lib/http.ts",
+        "python3 - <<'EOF'\nimport re\np='app/api/expenses/[id]/route.ts'; s=open(p).read(); s=s.replace(\"store.remove(id)\",\"store.remove(num)\"); open(p,'w').write(s)\np='lib/budgets.ts'; s=open(p).read()\ns=s.replace(\"if (spent > budget)\",\"if (spent >= budget)\")\ns=s.replace(\"      spentCents: spent,\\n\",\"      spentCents: spent,\\n      remainingCents: budget - spent,\\n\")\nopen(p,'w').write(s)\np='lib/expenses.ts'; s=open(p).read(); s=s.replace(\"get(id: number): Expense {\",\"get(id: number): Expense | undefined {\"); open(p,'w').write(s)\nEOF\nnpm run check 2>&1 | grep -v \"^$\" | tail -60",
+        "npm run check 2>&1 | tail -60",
+        "npm run check 2>&1 | grep -vE \"^\\s*$\" | tail -80",
+        "npx vitest run 2>&1 | grep -E \"FAIL|Assertion\" ; cat lib/recurring.ts lib/split.ts lib/ui.ts",
+        "npm run check 2>&1 | grep -vE \"^\\s*$\" | tail -40",
+        "npm run check 2>&1 | grep -vE \"^\\s*$\" | tail -30"
+      ],
+      "waits": [
+        [
+          "ls -a && cat package.json && ls .claude 2>/dev/null; git ls-files; npm run check",
+          2.36
+        ],
+        [
+          "cat .claude/settings.json SPEC.md \"app/api/expenses/[id]/route.ts\" lib/budgets.ts lib/expenses.ts lib/http.ts",
+          0.72
+        ],
+        [
+          "python3 - <<'EOF' import re p='app/api/expenses/[id]/route.ts'; s=open(p).read(); s=s.replace(\"store.remove(id)\",\"store.remove(num)\"); open(p,'w').write(s) p='lib/budgets.ts'; s=open(p).read() s=s.replace(\"if (spent > budget)\",\"if (spent >= budget)\") s=s.replace(\" spentCents: spent,\\n\",\" spentCents: spent,\\n remainingCents: budget - spent,\\n\") open(p,'w').write(s) p='lib/expenses.ts'; s=open(p).read(); s=s.replace(\"get(id: number): Expense {\",\"get(id: number): Expense | undefined {\"); open(p,'w').write(s) EOF npm run check 2>&1 | grep -v \"^$\"",
+          2.26
+        ],
+        [
+          "npm run check",
+          1.42
+        ],
+        [
+          "npm run check 2>&1 | grep -vE \"^\\s*$\"",
+          4.59
+        ],
+        [
+          "npx vitest run 2>&1 | grep -E \"FAIL|Assertion\" ; cat lib/recurring.ts lib/split.ts lib/ui.ts",
+          0.64
+        ],
+        [
+          "npm run check 2>&1 | grep -vE \"^\\s*$\"",
+          8.68
+        ],
+        [
+          "npm run check 2>&1 | grep -vE \"^\\s*$\"",
+          5.27
+        ]
+      ],
+      "wait_total_s": 25.939999999999998
+    },
+    "js": {
+      "predictions": 4,
+      "errors": 23,
+      "error_rate": 0.8518518518518519,
+      "latency_p50": 0.394,
+      "latency_p90": 0.427,
+      "n_steps": 3,
+      "base_rate_run": 1.0,
+      "mean_p_run": 0.42,
+      "brier_run": 0.5062666666666668,
+      "ece_run": 0.5800000000000001,
+      "rel_run": [
+        [
+          "0.0-0.1",
+          1,
+          0.08,
+          1.0
+        ],
+        [
+          "0.1-0.2",
+          1,
+          0.18,
+          1.0
+        ],
+        [
+          "0.9-1.0",
+          1,
+          1.0,
+          1.0
+        ]
+      ],
+      "top1_cmd_acc": 0.0,
+      "cmd_steps": 3,
+      "ece_top": 0.3933333333333333,
+      "rel_top": [
+        [
+          "0.0-0.1",
+          1,
+          0.036,
+          0.0
+        ],
+        [
+          "0.1-0.2",
+          1,
+          0.144,
+          0.0
+        ],
+        [
+          "0.9-1.0",
+          1,
+          1.0,
+          0.0
+        ]
+      ]
+    },
+    "sp": {
+      "launches": 1,
+      "hits": 0,
+      "misses": 2,
+      "saved_s": 0,
+      "wasted_s": 1.354,
+      "cmd_durations": {
+        "npm run check": 1.354
+      }
+    },
+    "policies": [
+      [
+        "never",
+        0,
+        0,
+        0.0,
+        0.0
+      ],
+      [
+        "always top-1",
+        3,
+        0,
+        0.0,
+        4.062
+      ],
+      [
+        "p_top > 0.5",
+        1,
+        0,
+        0.0,
+        1.354
+      ],
+      [
+        "p_top > 0.9",
+        1,
+        0,
+        0.0,
+        1.354
+      ],
+      [
+        "EV gate a=0.25",
+        1,
+        0,
+        0.0,
+        1.354
+      ],
+      [
+        "EV gate a=1.00",
+        1,
+        0,
+        0.0,
+        1.354
+      ]
+    ],
+    "oracle": 0
+  }
+}

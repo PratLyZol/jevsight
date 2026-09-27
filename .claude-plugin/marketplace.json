@@ -1,0 +1,12 @@
+{
+  "name": "jevsight",
+  "description": "Jevsight: speculative tool execution for Claude Code, gated by Jev",
+  "owner": { "name": "Pratishrut Kamal" },
+  "plugins": [
+    {
+      "name": "jevsight",
+      "source": "./plugins/jevsight",
+      "description": "Runs your agent's next shell command early when Jev's odds say it pays"
+    }
+  ]
+}

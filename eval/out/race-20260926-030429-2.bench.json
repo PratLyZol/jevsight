@@ -1,0 +1,247 @@
+{
+  "race-20260926-030429-2": {
+    "base": {
+      "finished": true,
+      "wall_s": 84.042,
+      "model_s": 76.881,
+      "other_s": 7.161000000000001,
+      "turns": 12,
+      "cost_usd": 0.7363998,
+      "tools": {
+        "ToolSearch": 1,
+        "mcp__fetch__fetch": 10
+      },
+      "bash": [],
+      "waits": [],
+      "wait_total_s": null,
+      "mcp": [
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio.html\"}",
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-runner.html\"}",
+        "fetch {\"max_length\":60000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":25000,\"start_index\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":25000,\"start_index\":50000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-stream.html\"}",
+        "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-sync.html\"}",
+        "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-subprocess.html\"}",
+        "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-queue.html\"}"
+      ],
+      "mcp_waits": [
+        [
+          "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio.html\"}",
+          0.55
+        ],
+        [
+          "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-runner.html\"}",
+          0.53
+        ],
+        [
+          "fetch {\"max_length\":60000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          1.02
+        ],
+        [
+          "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          0.87
+        ],
+        [
+          "fetch {\"max_length\":25000,\"start_index\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          0.85
+        ],
+        [
+          "fetch {\"max_length\":25000,\"start_index\":50000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          0.88
+        ],
+        [
+          "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-stream.html\"}",
+          0.64
+        ],
+        [
+          "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-sync.html\"}",
+          0.64
+        ],
+        [
+          "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-subprocess.html\"}",
+          0.61
+        ],
+        [
+          "fetch {\"max_length\":25000,\"url\":\"https://docs.python.org/3/library/asyncio-queue.html\"}",
+          0.58
+        ]
+      ],
+      "mcp_wait_total_s": 7.17,
+      "mcp_wait_share": 0.08531448561433569
+    },
+    "jev": {
+      "finished": true,
+      "wall_s": 61.509,
+      "model_s": 59.099,
+      "other_s": 2.4100000000000037,
+      "turns": 10,
+      "cost_usd": 0.6999024,
+      "tools": {
+        "ToolSearch": 1,
+        "mcp__fetch__fetch": 8
+      },
+      "bash": [],
+      "waits": [],
+      "wait_total_s": null,
+      "mcp": [
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio.html\"}",
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-runner.html\"}",
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":40000,\"start_index\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-stream.html\"}",
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-sync.html\"}",
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-subprocess.html\"}",
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-queue.html\"}"
+      ],
+      "mcp_waits": [
+        [
+          "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio.html\"}",
+          0.87
+        ],
+        [
+          "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-runner.html\"}",
+          0.01
+        ],
+        [
+          "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          0.89
+        ],
+        [
+          "fetch {\"max_length\":40000,\"start_index\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}",
+          0.0
+        ],
+        [
+          "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-stream.html\"}",
+          0.02
+        ],
+        [
+          "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-sync.html\"}",
+          0.0
+        ],
+        [
+          "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-subprocess.html\"}",
+          0.02
+        ],
+        [
+          "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-queue.html\"}",
+          0.55
+        ]
+      ],
+      "mcp_wait_total_s": 2.36,
+      "mcp_wait_share": 0.03836836885659009
+    },
+    "js": {
+      "predictions": 8,
+      "errors": 0,
+      "error_rate": 0.0,
+      "latency_p50": 0.417,
+      "latency_p90": 0.492,
+      "n_steps": 7,
+      "base_rate_run": 1.0,
+      "mean_p_run": 0.9842857142857142,
+      "brier_run": 0.0003000000000000005,
+      "ece_run": 0.01571428571428579,
+      "rel_run": [
+        [
+          "0.9-1.0",
+          7,
+          0.9842857142857142,
+          1.0
+        ]
+      ],
+      "top1_cmd_acc": 0.7142857142857143,
+      "cmd_steps": 7,
+      "ece_top": 0.3385285714285714,
+      "rel_top": [
+        [
+          "0.4-0.5",
+          1,
+          0.4116,
+          1.0
+        ],
+        [
+          "0.5-0.6",
+          2,
+          0.53955,
+          1.0
+        ],
+        [
+          "0.6-0.7",
+          2,
+          0.6373,
+          0.5
+        ],
+        [
+          "0.7-0.8",
+          2,
+          0.7928999999999999,
+          0.5
+        ]
+      ]
+    },
+    "sp": {
+      "launches": 8,
+      "hits": 5,
+      "misses": 3,
+      "saved_s": 5.026,
+      "wasted_s": 2.389,
+      "cmd_durations": {
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-runner.html\"}": 0.969,
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio.html\"}": 0.969,
+        "fetch {\"max_length\":20000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}": 0.834,
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-stream.html\"}": 1.39,
+        "fetch {\"max_length\":40000,\"start_index\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-task.html\"}": 1.391,
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-sync.html\"}": 0.67,
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-subprocess.html\"}": 0.606,
+        "fetch {\"max_length\":40000,\"url\":\"https://docs.python.org/3/library/asyncio-queue.html\"}": 0.586
+      }
+    },
+    "policies": [
+      [
+        "never",
+        0,
+        0,
+        0.0,
+        0.0
+      ],
+      [
+        "always top-1",
+        7,
+        5,
+        5.026,
+        1.44
+      ],
+      [
+        "p_top > 0.5",
+        6,
+        4,
+        4.42,
+        1.44
+      ],
+      [
+        "p_top > 0.9",
+        0,
+        0,
+        0.0,
+        0.0
+      ],
+      [
+        "EV gate a=0.25",
+        7,
+        5,
+        5.026,
+        1.44
+      ],
+      [
+        "EV gate a=1.00",
+        6,
+        4,
+        4.42,
+        1.44
+      ]
+    ],
+    "oracle": 5.612
+  }
+}
