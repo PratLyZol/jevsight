@@ -1,8 +1,10 @@
 {
   "name": "jevsight",
-  "version": "0.2.0",
-  "description": "Speculative tool execution for Claude Code. Jev predicts your agent's next shell command or MCP call and Jevsight runs it early when the odds say it pays. Wrap any stdio MCP server with bin/mcp_proxy.py.",
-  "author": { "name": "Pratishrut Kamal" },
+  "version": "0.3.0",
+  "description": "Jevsight agent for Claude Code: /jevsight:agent runs a read-only research task over one of your MCP servers with Claude keeping the thinking and Jev (TypeSafe's calibrated classifier) taking the routine tool calls: about half the model turns, same answer. Also ships the earlier MCP proxy (bin/mcp_proxy.py) that runs Jev's predicted call early inside Claude Code.",
+  "author": {
+    "name": "Pratishrut Kamal"
+  },
   "userConfig": {
     "api_key": {
       "type": "string",
@@ -35,6 +37,19 @@
       "description": "Command prefixes that are safe to run early, such as npm test. Your Bash allow rules are used too.",
       "multiple": true,
       "default": []
+    },
+    "model": {
+      "type": "string",
+      "title": "Model for the agent",
+      "description": "Anthropic model the agent calls (default claude-opus-5-5); needs ANTHROPIC_API_KEY in the environment"
+    },
+    "threshold": {
+      "type": "number",
+      "title": "Jev commit threshold",
+      "description": "Jev makes the call itself when its top candidate has at least this probability",
+      "default": 0.4,
+      "min": 0.1,
+      "max": 0.95
     }
   }
 }

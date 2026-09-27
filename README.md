@@ -199,11 +199,26 @@ A no-network rehearsal of the Neon race (fake server with 1s calls, stand-in pre
 ## Install as a plugin
 
 ```bash
-/plugin marketplace add <github-user>/jevsight
+/plugin marketplace add PratLyZol/jevsight
 /plugin install jevsight@jevsight
 ```
 
 Or try it locally without a marketplace: `claude --plugin-dir ./plugins/jevsight`.
+
+Then, in a project with a stdio MCP server in its `.mcp.json`:
+
+```
+/jevsight:agent fetch Read https://docs.python.org/3/library/asyncio.html and https://docs.python.org/3/library/asyncio-task.html and write a cheat sheet
+```
+
+The first word is the server name, the rest is the task. The skill runs `bin/jevagent.py`, the same loop as
+`agent/jevloop.py` packaged to stand alone: it takes the server command from `.mcp.json`, lets Jev call only read-only
+tools (tools that publish `readOnlyHint`, names that start with get/list/read/describe/search/fetch/find/show, never
+anything on the never-list), and prints the answer plus one line of numbers. It needs `ANTHROPIC_API_KEY` and a Jev key
+in the environment or in `./.env`; Claude Code's own subscription is not used, because the agent runs on the Messages
+API where Jev can take turns, which a Claude Code session does not allow. First run of the packaged agent on the
+seven-page task: 69.0s, 3 model turns, 8 tool calls of which Jev made 6, all seven pages named
+(`agent-20260926-213518-jev`).
 
 Settings (asked on install, or env vars):
 
@@ -211,6 +226,8 @@ Settings (asked on install, or env vars):
 | --- | --- | --- | --- |
 | api_key | `AI_GATEWAY_API_KEY`, `OPENROUTER_API_KEY` or `JEVSIGHT_API_KEY` | none | Jev key (Vercel AI Gateway, OpenRouter or TypeSafe) |
 | provider | `JEVSIGHT_PROVIDER` | whichever key is set | `vercel`, `openrouter` or `typesafe` |
+| model | `JEVSIGHT_MODEL` | claude-opus-5-5 | the model the agent calls on the Messages API |
+| threshold | `JEVSIGHT_THRESHOLD` | 0.4 | Jev makes the call itself when its top candidate has at least this probability |
 | mode | `JEVSIGHT_MODE` | shadow | `shadow` predicts and logs only, `on` runs guesses early, `off` |
 | alpha | `JEVSIGHT_ALPHA` | 0.25 | price of a wasted worker-second; lower means more speculation |
 | extra_commands | `JEVSIGHT_EXTRA_COMMANDS` | none | command prefixes safe to run early |

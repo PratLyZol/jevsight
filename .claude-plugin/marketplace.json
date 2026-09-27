@@ -1,12 +1,14 @@
 {
   "name": "jevsight",
-  "description": "Jevsight: speculative tool execution for Claude Code, gated by Jev",
-  "owner": { "name": "Pratishrut Kamal" },
+  "description": "Jevsight: a Claude + Jev agent for read-only research tasks, and speculative tool execution for Claude Code",
+  "owner": {
+    "name": "Pratishrut Kamal"
+  },
   "plugins": [
     {
       "name": "jevsight",
       "source": "./plugins/jevsight",
-      "description": "Runs your agent's next shell command early when Jev's odds say it pays"
+      "description": "Claude keeps the thinking, Jev takes the routine tool calls: /jevsight:agent runs a research task over your MCP servers with about half the model turns"
     }
   ]
 }
