@@ -1,17 +1,79 @@
 # Jevsight
 
-Speculative tool execution for Claude Code. While Claude is thinking, Jev (TypeSafe's calibrated System One model) predicts the next tool call. Jevsight runs it early only when the expected time saved beats the expected waste:
+An agent loop where a calibrated classifier takes the routine tool calls and the frontier model keeps the thinking.
 
-    EV = p * min(call time, Claude's thinking time) - (1 - p) * alpha * call time
+After every tool result, Jev (TypeSafe's System One model) is asked one multiple-choice question: *which of these exact
+read-only calls comes next, or is the agent done?* When its top answer clears a threshold, the loop makes that call
+itself and writes it into the transcript as if the model had asked for it. The frontier model (Claude Opus) is only
+called when Jev is unsure, when the work is done, or when the next step is not a choice from a list. Same tool calls,
+same answer, about half the model turns.
 
-Two places it plugs in:
+Measured on a seven-page documentation task with `claude-opus-5-5`, prompt caching on, medians of three:
 
-- **Shell commands**: a `PreToolUse` hook swaps in a replay of a command Jevsight already ran.
-- **MCP servers**: a stdio proxy sits between Claude and the real server, runs the predicted read-only call early, and answers Claude's call from the saved result. Claude Code hooks cannot replace an MCP result, so the proxy is the only way to do this.
+| | wall | model turns | billed-equivalent input tokens | sources named |
+| --- | --- | --- | --- | --- |
+| Claude alone | 83.3s | 10 | 84.0k | 7 / 7 |
+| Claude + Jev | 70.3s | 4 | 68.4k | 7 / 7 |
+| Haiku navigates, Opus writes (the obvious alternative) | 109.9s | 32 | 72k Opus + 127k Haiku | 7 / 7 |
 
-Claude sees the same output, sooner. If Jev is slow, overloaded or down, nothing is speculated and calls are simply relayed: correctness never depends on Jev.
+And on a 14-page reading list (one pair, cached): Claude alone 125.6s, 19 turns, 281.7k billed-equivalent; Claude + Jev
+109.8s, 10 turns, 244.9k, with Jev taking 9 turns, declining 9 and getting none wrong. Both named all 14 sources
+(`loop-20260926-203542-llm`, `loop-20260926-205230-jev`).
 
-## Quick start (demo races)
+Every number in this README names the run directory it comes from; nothing is staged.
+
+## The agent and its UI
+
+```bash
+cp .env.example .env            # add ANTHROPIC_API_KEY and a Jev key (AI_GATEWAY_API_KEY or OPENROUTER_API_KEY); edit it yourself
+python3 agent/ui.py             # API on http://127.0.0.1:8765 (standard library)
+cd web && npm install && npm run dev   # UI on http://localhost:3000
+```
+
+The page shows every turn as it happens: neutral cards for the model's turns, orange cards for Jev's decisions with a
+probability bar per candidate and the commit threshold marked, tool rows with timings, a ticking scoreboard (wall,
+model turns, tool calls, tokens, Jev cost) and the answer with the sources it named. Side-by-side mode runs Claude
+alone next to Claude + Jev on the same task; replay plays any saved run back on the same timeline
+(`/?replay=<run>,<run>&speed=4`).
+
+From the command line:
+
+```bash
+python3 agent/jevloop.py --driver both              # Claude alone, then Claude + Jev, scoreboard
+python3 agent/jevloop.py --driver all --repeat 3    # plus the Haiku cascade; medians over 3
+python3 agent/jevloop.py --driver both --app fetch-long   # the 14-page task
+```
+
+Runs land in `~/jevsight-races/loop-<stamp>-<driver>/` (`trace.jsonl`, `answer.md`, `result.json`) and one line per
+run is appended to `~/jevsight-races/loops.jsonl`.
+
+## How the loop decides
+
+- **Candidates.** Every read-only tool on the MCP server × the ids in hand: values listed in the task, ids and links in
+  earlier results, enum members, the arguments the model already used, and a server's own "continue from N" hint.
+  Ids listed in the task are pinned for the whole run so a long reading list is never pushed out by the links on the
+  pages read so far.
+- **The question.** The task, every call and result so far (long results shown as head and tail with the omission
+  marked), and the model's own words between calls go to Jev with two multiple-choice questions: call a tool or
+  finish, and which exact call.
+- **The rule.** Commit when the top candidate has p ≥ 0.4 and has not been made already (`--threshold`). On the
+  seven-page task 0.4 gave 13 commits in 3 runs, every one the correct next page; 0.5 declined correct picks sitting at
+  p 0.34-0.48.
+- **The transcript.** A committed call is appended as an assistant `tool_use` block followed by the real `tool_result`,
+  so the model can take over at any moment with nothing missing.
+- **Fails soft.** Jev unsure, wrong or down: the model takes the turn as it always would. A wrong pick is one extra
+  read-only page in the transcript, never a wrong answer. Nothing that writes, costs money or returns secrets is ever a
+  candidate.
+
+## Also in the repo: the Claude Code MCP proxy
+
+The first version of this idea was a stdio proxy between Claude Code and an MCP server that runs Jev's predicted call
+early and answers Claude's matching call from the saved result. It works (5 of 8 calls pre-answered on the fetch task,
+tool wait cut by half) but the wait it hides is under 10% of a run, so it is no longer the product. The candidate builder
+the loop uses lives in `plugins/jevsight/bin/mcp_proxy.py`; the race harness and its results below are kept for
+reference.
+
+## Reference: Claude Code races (proxy)
 
 ```bash
 cd ~/Documents/jevsight
@@ -117,6 +179,7 @@ Jev routes: set both `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY` and Jevsight 
 | API loop, same pair with prompt caching on | `loop-20260926-064947`, `-065417`, `-065839` (`llm` and `jev`) | mean of 3: wall 82.3s vs 76.8s (-7%), 9.7 vs 5.7 turns, 83.3k vs 76.7k billed-equivalent input tokens (-8%; cache writes at 1.25x, reads at 0.1x). Caching already removes most of the re-read cost that skipped turns were saving; the turn cut stands |
 | API loop, Haiku-cascade alternative (Haiku 4.5 navigates with a navigation-only instruction, Opus 5.5 writes) | `agent/jevloop.py --driver cascade`; `loop-20260926-064355/064555/064740-cascade` uncached, `-064947/065417/065839-cascade` cached | slower than plain Opus in all 6 runs: cached mean wall 109.9s, 32 turns, 30 tool calls (Haiku paged the docs in 5,000-char slices every run), 72k Opus-equivalent + 127k Haiku-equivalent tokens vs Jev's 77k Opus-equivalent total. A first version without the navigation-only instruction (`-063545/063814/064020`) also wasted 35-42s on a Haiku write-up that was then discarded |
 | API loop, Jev at commit threshold 0.4 (now the default), cached | `loop-20260926-070514`, `-070624`, `-070730` (`jev`) vs the cached `llm` runs above | median wall 70.3s vs 83.3s (-16%), 4 vs 10 model turns (-60%), 68.4k vs 84.0k billed-equivalent tokens (-19%); 13 commits in 3 runs, every one the correct next page, 0 errors, all 7 pages named. At 0.5 the same runs declined correct picks sitting at p 0.34-0.48. Repeats started within five minutes share a cached prefix (system, tools, first page), a small bias that favours every driver equally |
+| API loop, 14-page task (`--app fetch-long`), cached, one pair | `loop-20260926-203542-llm` vs `loop-20260926-205230-jev` | 125.6s vs 109.8s (-13%), 19 vs 10 model turns (-47%), 281.7k vs 244.9k billed-equivalent (-13%), 18 tool calls each, all 14 pages named on both sides; Jev 9 commits / 9 declined / 0 errors, none wrong. The first Jev run on this task (`-203542-jev`) committed only 3 times: the links inside each page had pushed the task's own reading list out of the candidate window, and long results were shown to Jev as a cut-off head that hid the server's own "truncated" notice. Both fixed in the candidate builder the same evening; the replay bench (`--steps --dump-states`) is what found them |
 | Jev's own cost | gateway model record for `typesafe-ai/jev`; `providerMetadata.gateway.cost` on each call | $0.042 per million input tokens, zero output, no prompt caching offered or needed; 7 calls per loop run, about a tenth of a cent per task |
 
 Reading the fetch rows: with the page list in the task and the server's own "start_index" hint, Jev picks the next page or the continuation most of the time and the proxy serves it in under 10ms. The two misses that repeat are Claude switching `max_length` mid-run (a value no earlier call used) and the last page. Wall-time differences between sides are dominated by how many calls Claude chose to make, so compare the wait columns, not the totals.
@@ -169,16 +232,13 @@ The state is the task, every tool call so far with a result excerpt (the newest 
 - Never: edits, writes, anything with shell operators or redirects, network or paid APIs, SQL, secrets.
 - Any edit or unrecognized command (shell) or non-read-only call (MCP) bumps a version. Guesses from an older version are never served.
 
-## Agent UI (TypeScript)
+## Agent UI (TypeScript), more detail
 
-A local web app with two views. **Agent loop** runs the Claude / Claude+Jev loop and shows every turn as it happens:
+A local web app. It runs the Claude / Claude+Jev loop and shows every turn as it happens:
 neutral cards for the frontier model's turns, orange cards for Jev's decisions with a probability bar per candidate and
 the commit threshold marked, tool rows with timings, a ticking scoreboard (wall, model turns, tool calls, tokens, Jev
 cost), and the answer with the sources it named. Side-by-side mode runs Claude alone next to Claude+Jev on the same
-task; replay plays any saved run back on the same timeline. **Claude Code race** replays any `race/race.py` run
-side by side: plain Claude Code against Claude Code with the proxy, with a wait bar per MCP call, Jev's prediction
-cards with the expected-value decision per candidate, the calls the proxy ran early, and green calls that were already
-answered when Claude asked. Deep links for demos: `/?replay=<run>,<run>&speed=4` and `/?race=<race>&speed=4`.
+task; replay plays any saved run back on the same timeline. Deep link for demos: `/?replay=<run>,<run>&speed=4`.
 
 ```bash
 python3 agent/ui.py            # API on http://127.0.0.1:8765 (standard library; same harness and run dirs as jevloop.py)

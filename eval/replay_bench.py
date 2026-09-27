@@ -407,6 +407,17 @@ def run_mcp(a, race, calls, wall, pred, cache, cache_path):
             ck = hashlib.sha1((pred.name + "mcp" + state + "\x00".join(keys)).encode()).hexdigest()
             probs = ask(pred, cache, cache_path, ck, lambda: pred.predict_generic(
                 state, mp.ACTIONS, "call_tool", keys, mp.ACTION_INSTR, mp.CHOICE_INSTR), k) if keys else {"p_run": 0.0, "commands": {}}
+            if a.dump_states:
+                os.makedirs(a.dump_states, exist_ok=True)
+                with open(os.path.join(a.dump_states, "step%02d-%s.txt" % (k, stage)), "w") as f:
+                    f.write(state + "\n\nCANDIDATES:\n" + "\n".join(keys) + "\n\nACTUAL NEXT: %s\n" % actual)
+            if a.steps:
+                pr = probs.get("commands", {})
+                top = max(pr, key=pr.get) if pr else None
+                prev = key_of(c)
+                print("  step %2d %-9s p_top=%.2f n=%2d top=%-46s actual=%-46s %s%s" % (
+                    k, stage, pr.get(top, 0.0), len(keys), (top or "-")[6:52], (actual or "-")[6:52],
+                    "HIT" if top == actual else "miss", "  <- top == previous call" if top == prev else ""))
             predictions.append({"k": k, "stage": stage, "t_ready": t_ready, "probs": probs.get("commands", {}),
                                 "p_run": probs.get("p_run", 0.0), "actual": actual if actual_safe else None,
                                 "actual_raw": actual, "next_tool": nxt["tool"],
@@ -572,6 +583,9 @@ def main():
     ap.add_argument("--prompt", help="task prompt shown to Jev (default: <race>/prompt.txt, or the fix-app prompt)")
     ap.add_argument("--predictor", choices=["jev", "heuristic"], default="jev")
     ap.add_argument("--alpha", type=float, default=0.25)
+    ap.add_argument("--steps", action="store_true", help="print every step: Jev's top pick vs the actual next call")
+    ap.add_argument("--dump-states", help="directory to write the exact state text and candidate list sent to Jev at each step")
+    ap.add_argument("--no-cache", action="store_true", help="ask Jev afresh instead of reusing replay_cache.json")
     ap.add_argument("--latency", type=float, default=0.4, help="assumed live prediction latency, seconds")
     ap.add_argument("--no-narration", dest="narration", action="store_false",
                     help="predict without Claude's narration between calls (the state Jevsight used before)")
@@ -587,6 +601,8 @@ def main():
     if a.mode == "auto":
         a.mode = "mcp" if any(c["tool"].startswith("mcp__") for c in calls) else "bash"
     cache_path = os.path.join(race, "replay_cache.json")
+    if getattr(a, "no_cache", False):
+        cache_path = os.path.join(race, "replay_cache.%d.json" % int(time.time()))
     try:
         cache = json.load(open(cache_path))
     except (OSError, ValueError):

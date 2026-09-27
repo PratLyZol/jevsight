@@ -77,6 +77,12 @@ SPLIT_KEYS = {"full_name": ("repo_owner", "repo_name")}   # "owner/repo" -> two 
 # optional params whose value the *server* announces in a result (fetch: "start_index of 5000"); a candidate
 # variant carrying that hint is built even though Claude has not used the param yet
 HINT_PARAMS = {"start_index"}
+TASK_GEN = 10 ** 9   # generation stamp for ids listed in the task itself: they never age out of the candidate window
+
+
+def newest_gen(gens):
+    """The generation of the newest *result* (task-listed ids do not count)."""
+    return max((g for g in gens.values() if g != TASK_GEN), default=-1)
 LINK = re.compile(r'\]\((https?://[^)\s"]+)\)|<(https?://[^>\s"]+)>|(?<![\w"(])(https?://[^\s"<>)\]]+)')
 START_INDEX = re.compile(r'start_index of (\d+)')
 DEFAULT_BRANCH = [re.compile(r'"default_branch_id"\s*:\s*"(br-[^"]+)"'),
@@ -188,7 +194,10 @@ def extract_values(values, text, gens=None, gen=0):
         values[k] = (vs + old)[:64]
         if gens is not None:
             for v in vs:
-                gens[v] = gen
+                if gen == 0:
+                    gens[v] = TASK_GEN           # listed in the task: stays a first-class candidate for the whole run
+                elif gens.get(v) != TASK_GEN:
+                    gens[v] = gen
 
 
 def learn_default_branch(defaults, text, project_id):
@@ -202,7 +211,15 @@ def learn_default_branch(defaults, text, project_id):
 
 
 def step_line(name, args, text, limit=300):
-    return "%s(%s) -> %s" % (name, json.dumps(args, sort_keys=True)[:160], " ".join(text[:limit].split()) or "(empty)")
+    """One trace line for Jev. A long result is shown as its head and its tail with an explicit note, never as a
+    silently cut head: a server's own "content truncated, continue from N" notice sits at the END of the result, and
+    a head-only cut made every complete page look truncated, so Jev kept predicting a re-fetch of the page it had
+    just read instead of the next one."""
+    body = " ".join(text.split())
+    if len(body) > limit:
+        head, tail = int(limit * 0.7), limit - int(limit * 0.7)
+        body = "%s … [%d chars in full; middle omitted from this trace] … %s" % (body[:head], len(body), body[-tail:])
+    return "%s(%s) -> %s" % (name, json.dumps(args, sort_keys=True)[:160], body or "(empty)")
 
 
 FULL_RESULT_CHARS = 1200   # the newest few results are shown to Jev at this length, older ones at 300
@@ -274,7 +291,12 @@ def build_candidates(tools, read_only, values, used_args, called=(), gens=None, 
                 combos = []
                 break
             per = 24 if len(required) == 1 else 8
-            combos = [(dict(c, **{r: v}), max(pos, i)) for c, pos in combos for i, v in enumerate(vals[:per])][:60]
+            # ids the task itself lists always make the cut (a 14-page reading list must not be pushed out by the links
+            # on the pages read so far); the freshest result ids fill the rest of the window
+            listed = [v for v in vals if gens.get(str(v)) == TASK_GEN]
+            fresh = [v for v in vals if gens.get(str(v)) != TASK_GEN][:per]
+            window = [v for v in vals if v in listed or v in fresh]
+            combos = [(dict(c, **{r: v}), max(pos, i)) for c, pos in combos for i, v in enumerate(window)][:80]
         for c, pos in combos:
             # repeat Claude's earlier optional *identifier* args (branchId, ref, ...), never pagination or formatting
             # flags; an optional param with a fresh hint in the results (fetch's start_index) gets its own variant
@@ -284,7 +306,7 @@ def build_candidates(tools, read_only, values, used_args, called=(), gens=None, 
             for k in props:
                 if k in c or k not in HINT_PARAMS:
                     continue
-                hinted = [v for v in param_values(k, values, {}, props.get(k))[:1] if gens.get(str(v), -1) == max(gens.values(), default=-1)]
+                hinted = [v for v in param_values(k, values, {}, props.get(k))[:1] if gens.get(str(v), -1) == newest_gen(gens)]
                 if hinted and hinted[0] != extra.get(k):
                     variants.insert(0, (dict(c, **dict(extra, **{k: hinted[0]})), -1))
             for a, bare in variants:

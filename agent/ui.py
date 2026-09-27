@@ -5,7 +5,7 @@
   cd web && npm run dev              # UI on http://localhost:3000 (proxies /api/* here)
 
 Standard library only. Live runs use the same harness as `agent/jevloop.py` (same run directories, same
-loops.jsonl records); replay mode serves any saved run directory for the UI to play back on its timeline.
+loops.jsonl records); replay serves any saved run directory for the UI to play back on its timeline.
 """
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ import argparse
 import json
 import os
 import sys
-import subprocess
 import threading
 import time
 import types
@@ -27,7 +26,6 @@ for d in ("agent", "race", os.path.join("plugins", "jevsight", "bin"), "tests"):
 
 import jevloop  # noqa: E402
 import race  # noqa: E402
-from datetime import datetime, timezone  # noqa: E402
 
 UI_URL = os.environ.get("JEVSIGHT_UI_URL", "http://localhost:3000")
 RUNS_DIR = os.path.expanduser(os.environ.get("JEVSIGHT_RUNS_DIR", "~/jevsight-races"))
@@ -137,205 +135,6 @@ def load_run(name):
     return {"name": name, "events": events, "result": result, "answer": answer}
 
 
-# ---------- Claude Code races (race/race.py output) ----------
-RACE_PROCS: dict[str, subprocess.Popen] = {}   # run dir name -> race.py process started from the UI
-
-
-def start_race(body):
-    app = body.get("app") or "fetch"
-    if app not in MCP_APPS:
-        raise ValueError("unknown app %r" % app)
-    before = set(os.listdir(RUNS_DIR)) if os.path.isdir(RUNS_DIR) else set()
-    cmd = [sys.executable, os.path.join(ROOT, "race", "race.py"), "--app", app, "--no-ui", "--runs-dir", RUNS_DIR]
-    log = open(os.path.join(RUNS_DIR, "race-ui.log"), "a")
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-    name = None
-    for _ in range(100):   # the run directory appears within a few seconds
-        time.sleep(0.2)
-        new = [n for n in os.listdir(RUNS_DIR) if n.startswith("race-") and n not in before and os.path.isdir(os.path.join(RUNS_DIR, n))]
-        if new:
-            name = sorted(new)[-1]
-            break
-    if name is None:
-        raise ValueError("race.py did not create a run directory; see %s" % os.path.join(RUNS_DIR, "race-ui.log"))
-    RACE_PROCS[name] = proc
-    return {"name": name, "pid": proc.pid}
-
-
-def race_running(name):
-    p = RACE_PROCS.get(name)
-    return p is not None and p.poll() is None
-
-
-def list_races():
-    """Races from race/results/races.jsonl plus any race directory still being written, newest first."""
-    out, seen = [], set()
-    try:
-        recs = [json.loads(l) for l in open(os.path.join(race.RESULTS, "races.jsonl")) if l.strip()]
-    except OSError:
-        recs = []
-    if os.path.isdir(RUNS_DIR):
-        for n in sorted(os.listdir(RUNS_DIR), reverse=True):
-            d = os.path.join(RUNS_DIR, n)
-            if n.startswith("race-") and n in RACE_PROCS and not any(os.path.basename(r.get("run_dir") or "") == n for r in recs):
-                app = ""
-                try:
-                    task = open(os.path.join(d, "prompt.txt")).read()
-                    app = next((k for k, v in MCP_APPS.items() if v["prompt"].strip() == task.strip()), "")
-                except OSError:
-                    task = ""
-                out.append({"name": n, "app": app, "predictor": "jev", "jev_errors": None, "running": race_running(n),
-                            "baseline": {"seconds": None, "mcp_calls": None, "wait_s": None},
-                            "jevsight": {"seconds": None, "mcp_calls": None, "wait_s": None}})
-                seen.add(n)
-    for r in reversed(recs):
-        d = r.get("run_dir") or ""
-        name = os.path.basename(d)
-        sides = r.get("sides") or {}
-        if name in seen or "baseline" not in sides or "jevsight" not in sides or not os.path.isdir(d):
-            continue
-        seen.add(name)
-        b, j = sides["baseline"], sides["jevsight"]
-        out.append({"name": name, "app": r.get("app"), "predictor": r.get("predictor"), "jev_errors": r.get("jev_errors"), "running": False,
-                    "baseline": {"seconds": b.get("seconds"), "mcp_calls": b.get("mcp_calls"), "wait_s": b.get("wait_s")},
-                    "jevsight": {"seconds": j.get("seconds"), "mcp_calls": j.get("mcp_calls"), "wait_s": j.get("wait_s"),
-                                 "hits": j.get("hits"), "launches": j.get("launches")}})
-    return out
-
-
-def _iso(ts):
-    return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp() if ts else None
-
-
-def race_side(run_dir, side):
-    """One side of a race as a list of timeline events with seconds since that side started."""
-    lines = [l for l in open(os.path.join(run_dir, side + ".stream.jsonl")) if l.strip()]
-    times = {}
-    try:
-        for l in open(os.path.join(run_dir, side + ".times.jsonl")):
-            if l.strip():
-                r = json.loads(l)
-                times[r["line"]] = r["t"]
-    except OSError:
-        pass
-    start_abs = None
-    events, calls, pending = [], [], {}
-    for i, l in enumerate(lines):
-        try:
-            e = json.loads(l)
-        except ValueError:
-            continue
-        t = times.get(i)
-        ts = _iso(e.get("timestamp")) if isinstance(e.get("timestamp"), str) else None
-        if start_abs is None and ts is not None and t is not None:
-            start_abs = ts - t
-        if t is None and ts is not None and start_abs is not None:
-            t = ts - start_abs
-        if t is None:
-            t = events[-1]["t"] if events else 0.0
-        t = round(t, 3)
-        typ = e.get("type")
-        msg = e.get("message") if isinstance(e.get("message"), dict) else {}
-        content = msg.get("content") if isinstance(msg.get("content"), list) else []
-        if typ == "assistant":
-            for b in content:
-                if not isinstance(b, dict):
-                    continue
-                if b.get("type") == "text" and (b.get("text") or "").strip() and e.get("parent_tool_use_id") is None:
-                    events.append({"kind": "narration", "t": t, "text": b["text"][:600]})
-                elif b.get("type") == "tool_use":
-                    name = b.get("name") or ""
-                    if name.startswith("mcp__"):
-                        short = name.split("__", 2)[-1]
-                        args = b.get("input") or {}
-                        ev = {"kind": "call", "t": t, "id": b.get("id"), "tool": short, "args": args,
-                              "key": "%s %s" % (short, json.dumps(args, sort_keys=True, separators=(",", ":")))}
-                        events.append(ev)
-                        calls.append(ev)
-                        pending[b.get("id")] = ev
-                    else:
-                        events.append({"kind": "other_tool", "t": t, "tool": name})
-        elif typ == "user":
-            for b in content:
-                if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") in pending:
-                    call = pending.pop(b["tool_use_id"])
-                    c = b.get("content")
-                    text = c if isinstance(c, str) else " ".join(x.get("text", "") for x in c if isinstance(x, dict)) if isinstance(c, list) else ""
-                    call["wait"] = round(t - call["t"], 3)
-                    call["chars"] = len(text)
-                    call["error"] = bool(b.get("is_error"))
-                    events.append({"kind": "result", "t": t, "id": call["id"], "tool": call["tool"], "wait": call["wait"],
-                                   "chars": call["chars"], "error": call["error"]})
-        elif typ == "result":
-            u = e.get("usage") or {}
-            events.append({"kind": "done", "t": round(e.get("duration_ms", 0) / 1000, 3), "num_turns": e.get("num_turns"),
-                           "cost_usd": e.get("total_cost_usd"), "input_tokens": (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0),
-                           "output_tokens": u.get("output_tokens")})
-    return events, calls, start_abs
-
-
-def load_race(name):
-    if "/" in name or ".." in name or not name.startswith("race-"):
-        raise ValueError("bad race name")
-    d = os.path.join(RUNS_DIR, name)
-    task = ""
-    try:
-        task = open(os.path.join(d, "prompt.txt")).read()
-    except OSError:
-        pass
-    out = {"name": name, "task": task, "running": race_running(name), "sides": {}}
-    for side in ("baseline", "jevsight"):
-        if not os.path.isfile(os.path.join(d, side + ".stream.jsonl")):
-            out["sides"][side] = [{"kind": "start", "t": 0.0, "side": side, "task": task[:2000]}]
-            continue
-        events, calls, start_abs = race_side(d, side)
-        events.insert(0, {"kind": "start", "t": 0.0, "side": side, "task": task[:2000]})
-        try:
-            answer = open(os.path.join(d, side + ".answer.md")).read()
-        except OSError:
-            answer = ""
-        if side == "jevsight" and start_abs is not None:
-            try:
-                pe = [json.loads(l) for l in open(os.path.join(d, "jevsight-data", "events.jsonl")) if l.strip()]
-            except OSError:
-                pe = []
-            served = [e for e in pe if e.get("type") in ("hit", "miss")]
-            for call, sv in zip(calls, served):   # Claude's k-th MCP call reaches the proxy as the k-th hit/miss
-                call["served"] = sv["type"]
-                call["head_start"] = sv.get("head_start_s")
-                call["p"] = sv.get("p")
-            for e in pe:
-                t = round(e["ts"] - start_abs, 3)
-                k = e.get("type")
-                if k == "predict":
-                    events.append({"kind": "predict", "t": t, "latency": e.get("latency_s"), "p_run": e.get("p_run"),
-                                   "n_candidates": e.get("n_candidates"), "after_narration": e.get("after_narration"),
-                                   "top": [{"cmd": x["cmd"], "p": x["p"], "ev": x.get("ev"), "decision": x.get("decision")} for x in (e.get("top") or [])[:6]]})
-                elif k == "launch":
-                    events.append({"kind": "launch", "t": t, "cmd": e["cmd"], "p": e.get("p"), "ev": e.get("ev")})
-                elif k == "job_done":
-                    events.append({"kind": "job_done", "t": t, "cmd": e["cmd"], "dur": e.get("dur_s"), "status": e.get("status")})
-                elif k in ("hit", "miss"):
-                    events.append({"kind": k, "t": t, "cmd": e["cmd"], "head_start": e.get("head_start_s"), "p": e.get("p")})
-                elif k == "predict_error":
-                    events.append({"kind": "predict_error", "t": t, "error": (e.get("error") or "")[:200]})
-            for ev in events:
-                if ev["kind"] == "result":
-                    call = next((c for c in calls if c["id"] == ev["id"]), None)
-                    if call:
-                        ev["served"] = call.get("served")
-                        ev["head_start"] = call.get("head_start")
-            events.sort(key=lambda x: x["t"])
-        done = next((x for x in events if x["kind"] == "done"), None)
-        if done:
-            done["answer"] = answer
-            done["mcp_calls"] = len(calls)
-            done["wait_s"] = round(sum(c.get("wait") or 0 for c in calls), 3)
-            done["hits"] = sum(1 for c in calls if c.get("served") == "hit")
-        out["sides"][side] = events
-    return out
-
-
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quiet
         pass
@@ -377,10 +176,6 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(list_runs())
             elif u.path == "/api/run":
                 self.send_json(load_run(q.get("name", [""])[0]))
-            elif u.path == "/api/races":
-                self.send_json(list_races())
-            elif u.path == "/api/race":
-                self.send_json(load_race(q.get("name", [""])[0]))
             elif u.path == "/api/events":
                 self.stream(q.get("job", [""])[0])
             else:
@@ -398,8 +193,6 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("ANTHROPIC_API_KEY is not set (add it to .env)")
                 job = start_job(body)
                 self.send_json({"job": job.id})
-            elif u.path == "/api/race/start":
-                self.send_json(start_race(body))
             else:
                 self.send_json({"error": "not found"}, 404)
         except ValueError as e:
