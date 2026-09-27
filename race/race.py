@@ -65,6 +65,17 @@ FETCH_PROMPT = (
     "next page. The cheat sheet needs one section per page with the main functions and classes, each with a one-line "
     "description, and a closing section on which primitives to reach for first. Read only; do not fetch anything else."
 )
+# A longer walk for the harness comparison: the seven asyncio pages plus the rest of the concurrency toolbox.
+FETCH_PAGES_LONG = FETCH_PAGES + ["asyncio-exceptions.html", "asyncio-future.html", "asyncio-eventloop.html",
+                                  "asyncio-platforms.html", "concurrent.futures.html", "threading.html", "queue.html"]
+FETCH_PROMPT_LONG = (
+    "Using only the fetch tool, write a markdown field guide to Python's concurrency toolbox from these pages, read in "
+    "this order, one fetch at a time: " + ", ".join("https://docs.python.org/3/library/" + p for p in FETCH_PAGES_LONG) + ". "
+    "When a page comes back truncated, fetch the rest of it (with the start_index the tool suggests) before moving to the "
+    "next page. The guide needs one section per page with the main functions and classes, each with a one-line "
+    "description, then a closing section that says when to reach for asyncio, threads, processes or a plain queue. "
+    "Read only; do not fetch anything else."
+)
 APPS = {
     "small": {"kind": "npm", "starter": os.path.join(ROOT, "race", "starter"),
               "prompt": "Implement SPEC.md. You're done when `npm test` and `npm run typecheck` both pass."},
@@ -80,6 +91,8 @@ APPS = {
     # mcp-server-fetch publishes no readOnlyHint, so its one tool is allowlisted for the proxy explicitly
     "fetch": {"kind": "mcp", "starter": None, "server": "fetch", "prompt": FETCH_PROMPT, "read_only": "fetch",
               "verify_rx": re.compile(r'"url"\s*:\s*"[^"]*/([^/"]+?)(?:\.html)?"(?=[,}])'), "verify_from": "args", "verify_what": "pages"},
+    "fetch-long": {"kind": "mcp", "starter": None, "server": "fetch", "prompt": FETCH_PROMPT_LONG, "read_only": "fetch",
+                   "verify_rx": re.compile(r'"url"\s*:\s*"[^"]*/([^/"]+?)(?:\.html)?"(?=[,}])'), "verify_from": "args", "verify_what": "pages"},
 }
 # Same for both sides: keeps the user's personal Claude Code setup from steering the race.
 RACE_SYSTEM_NOTE = "You are working alone in a benchmark run. Work directly in this session and do not spawn subagents."

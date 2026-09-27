@@ -58,6 +58,7 @@ select:hover, textarea:hover, input:hover { border-color: var(--line-strong); }
 .btn.ghost { background: transparent; color: var(--muted); border-color: var(--line); }
 .btn.ghost:hover { color: var(--text); border-color: var(--line-strong); }
 .status { color: var(--dim); font-size: 13px; margin-top: 10px; min-height: 18px; }
+.hint-inline { color: var(--dim); font-size: 13px; }
 
 .side-panel h2 { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
 .side-panel p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }

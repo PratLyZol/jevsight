@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import sys
+import subprocess
 import threading
 import time
 import types
@@ -137,13 +138,56 @@ def load_run(name):
 
 
 # ---------- Claude Code races (race/race.py output) ----------
+RACE_PROCS: dict[str, subprocess.Popen] = {}   # run dir name -> race.py process started from the UI
+
+
+def start_race(body):
+    app = body.get("app") or "fetch"
+    if app not in MCP_APPS:
+        raise ValueError("unknown app %r" % app)
+    before = set(os.listdir(RUNS_DIR)) if os.path.isdir(RUNS_DIR) else set()
+    cmd = [sys.executable, os.path.join(ROOT, "race", "race.py"), "--app", app, "--no-ui", "--runs-dir", RUNS_DIR]
+    log = open(os.path.join(RUNS_DIR, "race-ui.log"), "a")
+    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+    name = None
+    for _ in range(100):   # the run directory appears within a few seconds
+        time.sleep(0.2)
+        new = [n for n in os.listdir(RUNS_DIR) if n.startswith("race-") and n not in before and os.path.isdir(os.path.join(RUNS_DIR, n))]
+        if new:
+            name = sorted(new)[-1]
+            break
+    if name is None:
+        raise ValueError("race.py did not create a run directory; see %s" % os.path.join(RUNS_DIR, "race-ui.log"))
+    RACE_PROCS[name] = proc
+    return {"name": name, "pid": proc.pid}
+
+
+def race_running(name):
+    p = RACE_PROCS.get(name)
+    return p is not None and p.poll() is None
+
+
 def list_races():
-    """Races from race/results/races.jsonl, newest first, one row per run directory."""
+    """Races from race/results/races.jsonl plus any race directory still being written, newest first."""
     out, seen = [], set()
     try:
         recs = [json.loads(l) for l in open(os.path.join(race.RESULTS, "races.jsonl")) if l.strip()]
     except OSError:
-        return out
+        recs = []
+    if os.path.isdir(RUNS_DIR):
+        for n in sorted(os.listdir(RUNS_DIR), reverse=True):
+            d = os.path.join(RUNS_DIR, n)
+            if n.startswith("race-") and n in RACE_PROCS and not any(os.path.basename(r.get("run_dir") or "") == n for r in recs):
+                app = ""
+                try:
+                    task = open(os.path.join(d, "prompt.txt")).read()
+                    app = next((k for k, v in MCP_APPS.items() if v["prompt"].strip() == task.strip()), "")
+                except OSError:
+                    task = ""
+                out.append({"name": n, "app": app, "predictor": "jev", "jev_errors": None, "running": race_running(n),
+                            "baseline": {"seconds": None, "mcp_calls": None, "wait_s": None},
+                            "jevsight": {"seconds": None, "mcp_calls": None, "wait_s": None}})
+                seen.add(n)
     for r in reversed(recs):
         d = r.get("run_dir") or ""
         name = os.path.basename(d)
@@ -152,7 +196,7 @@ def list_races():
             continue
         seen.add(name)
         b, j = sides["baseline"], sides["jevsight"]
-        out.append({"name": name, "app": r.get("app"), "predictor": r.get("predictor"), "jev_errors": r.get("jev_errors"),
+        out.append({"name": name, "app": r.get("app"), "predictor": r.get("predictor"), "jev_errors": r.get("jev_errors"), "running": False,
                     "baseline": {"seconds": b.get("seconds"), "mcp_calls": b.get("mcp_calls"), "wait_s": b.get("wait_s")},
                     "jevsight": {"seconds": j.get("seconds"), "mcp_calls": j.get("mcp_calls"), "wait_s": j.get("wait_s"),
                                  "hits": j.get("hits"), "launches": j.get("launches")}})
@@ -239,8 +283,11 @@ def load_race(name):
         task = open(os.path.join(d, "prompt.txt")).read()
     except OSError:
         pass
-    out = {"name": name, "task": task, "sides": {}}
+    out = {"name": name, "task": task, "running": race_running(name), "sides": {}}
     for side in ("baseline", "jevsight"):
+        if not os.path.isfile(os.path.join(d, side + ".stream.jsonl")):
+            out["sides"][side] = [{"kind": "start", "t": 0.0, "side": side, "task": task[:2000]}]
+            continue
         events, calls, start_abs = race_side(d, side)
         events.insert(0, {"kind": "start", "t": 0.0, "side": side, "task": task[:2000]})
         try:
@@ -351,6 +398,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("ANTHROPIC_API_KEY is not set (add it to .env)")
                 job = start_job(body)
                 self.send_json({"job": job.id})
+            elif u.path == "/api/race/start":
+                self.send_json(start_race(body))
             else:
                 self.send_json({"error": "not found"}, 404)
         except ValueError as e:

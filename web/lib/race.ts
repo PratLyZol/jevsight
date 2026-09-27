@@ -26,15 +26,17 @@ export type RaceEvent =
 export interface RaceSummary {
   name: string;
   app: string;
+  running?: boolean;
   predictor: string;
   jev_errors: number | null;
-  baseline: { seconds: number; mcp_calls: number; wait_s: number };
-  jevsight: { seconds: number; mcp_calls: number; wait_s: number; hits?: number | null };
+  baseline: { seconds: number | null; mcp_calls: number | null; wait_s: number | null };
+  jevsight: { seconds: number | null; mcp_calls: number | null; wait_s: number | null; hits?: number | null };
 }
 
 export interface SavedRace {
   name: string;
   task: string;
+  running?: boolean;
   sides: Record<RaceSide, RaceEvent[]>;
 }
 

@@ -25,6 +25,8 @@ export default function Page() {
   const [speed, setSpeed] = useState(4);
   const [picked, setPicked] = useState<string[]>([]);
   const [pickedRace, setPickedRace] = useState("");
+  const [raceApp, setRaceApp] = useState("fetch");
+  const poll = useRef<number | null>(null);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [sides, setSides] = useState<SideState[]>([]);
@@ -55,7 +57,8 @@ export default function Page() {
     source.current = null;
     if (timer.current) window.clearInterval(timer.current);
     if (pump.current) window.clearInterval(pump.current);
-    timer.current = pump.current = null;
+    if (poll.current) window.clearInterval(poll.current);
+    timer.current = pump.current = poll.current = null;
   };
 
   const startClock = (simulated?: () => number) => {
@@ -147,6 +150,48 @@ export default function Page() {
     evs.sort((x, y) => x.t - y.t);
     playback(evs, rate, (ev) => setRaceSides((prev) => prev.map((s) => (s.side === ev.side ? reduceRace(s, ev) : s))));
     setStatus(`Replaying ${n} at ${rate}×`);
+  }
+
+  // ---- Claude Code race: live (race.py runs both sides; the page rebuilds the timeline from the files every 2 s) ----
+  async function startLiveRace() {
+    stopAll();
+    setSides([]);
+    setBusy(true);
+    setStatus("Starting both Claude Code sessions…");
+    const r = (await (await fetch(`${API}/api/race/start`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ app: raceApp }) })).json()) as {
+      name?: string;
+      error?: string;
+    };
+    if (!r.name) {
+      setStatus(r.error ?? "Could not start the race");
+      setBusy(false);
+      return;
+    }
+    const name = r.name;
+    setPickedRace(name);
+    setStatus(`Racing (${name})`);
+    const order: RaceSide[] = ["baseline", "jevsight"];
+    const t0 = performance.now();
+    const refresh = async () => {
+      const race = (await (await fetch(`${API}/api/race?name=${encodeURIComponent(name)}`)).json()) as SavedRace;
+      const elapsed = (performance.now() - t0) / 1000;
+      setRaceSides(
+        order.map((side) => {
+          let s = emptyRaceSide(side);
+          for (const e of race.sides[side] ?? []) s = reduceRace(s, e);
+          return s.done ? s : { ...s, clock: elapsed };
+        }),
+      );
+      if (!race.running) {
+        stopAll();
+        setBusy(false);
+        setStatus("Race finished");
+        loadRuns();
+      }
+    };
+    setRaceSides(order.map(emptyRaceSide));
+    await refresh();
+    poll.current = window.setInterval(refresh, 2000);
   }
 
   function playback<E extends { t?: number }>(evs: E[], rate: number, apply: (ev: E) => void) {
@@ -291,11 +336,27 @@ export default function Page() {
                 asked.
               </p>
               <div className="row">
+                <label>Task</label>
+                <select value={raceApp} onChange={(e) => setRaceApp(e.target.value)}>
+                  {config &&
+                    Object.entries(config.apps).map(([k, v]) => (
+                      <option value={k} key={k}>
+                        {k} ({v.server})
+                      </option>
+                    ))}
+                </select>
+                <button className="btn primary" onClick={startLiveRace} disabled={busy}>
+                  Run a new race
+                </button>
+                <span className="hint-inline">Two Claude Code sessions start together; takes a few minutes.</span>
+              </div>
+              <div className="row">
                 <select value={pickedRace} onChange={(e) => setPickedRace(e.target.value)} style={{ minWidth: 420, fontFamily: "var(--font-mono)", fontSize: 12 }}>
-                  <option value="">Pick a race…</option>
+                  <option value="">Replay a recorded race…</option>
                   {races.map((r) => (
                     <option value={r.name} key={r.name}>
-                      {r.name.slice(5)} {r.app.padEnd(6)} plain {r.baseline.seconds}s / {r.baseline.wait_s}s waited · proxy {r.jevsight.seconds}s / {r.jevsight.wait_s}s waited
+                      {r.name.slice(5)} {(r.app || "?").padEnd(10)}
+                      {r.running ? " running now" : ` plain ${r.baseline.seconds}s / ${r.baseline.wait_s}s waited · proxy ${r.jevsight.seconds}s / ${r.jevsight.wait_s}s waited`}
                     </option>
                   ))}
                 </select>
@@ -307,8 +368,8 @@ export default function Page() {
                     </option>
                   ))}
                 </select>
-                <button className="btn primary" onClick={() => startRace()} disabled={!pickedRace}>
-                  Play the race
+                <button className="btn ghost" onClick={() => startRace()} disabled={!pickedRace || busy}>
+                  Play
                 </button>
               </div>
               <div className="status">{status}</div>
