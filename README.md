@@ -32,9 +32,15 @@ cd web && npm install && npm run dev   # UI on http://localhost:3000
 
 The page shows every turn as it happens: neutral cards for the model's turns, orange cards for Jev's decisions with a
 probability bar per candidate and the commit threshold marked, tool rows with timings, a ticking scoreboard (wall,
-model turns, tool calls, tokens, Jev cost) and the answer with the sources it named. Side-by-side mode runs Claude
-alone next to Claude + Jev on the same task; replay plays any saved run back on the same timeline
-(`/?replay=<run>,<run>&speed=4`).
+model turns, tool calls, tokens, Jev cost) and the answer with the sources it named. The default mode, **Claude Code vs Claude + Jev**, starts a real Claude Code
+session (the CLI, clean config, same model and MCP server) on the left and the agent on the right at the same moment;
+the other modes run Claude alone, Claude + Jev, both, or the Haiku cascade. Replay plays any saved run back on the same
+timeline (`/?replay=<run>,<run>&speed=4`, or `/?versus=<race-dir>,<loop-run>&speed=4` for a recorded Claude Code
+session against a recorded agent run).
+
+On the 14-page task, recorded: Claude Code 159.5s, 25 turns, 23 tool calls, $1.42; the agent 109.8s, 10 model turns, 18
+tool calls of which Jev made 9 (`race-20260926-203256-1` baseline side vs `loop-20260926-205230-jev`). Different
+harnesses (Claude Code has its own system prompt, tool plumbing and caching), same model, prompt, server and moment.
 
 From the command line:
 

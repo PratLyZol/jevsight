@@ -26,11 +26,12 @@ Replay `loop-20260926-065839-cascade` (Haiku navigates, Opus writes). Thirty-one
 110 seconds: slower than Opus alone, because Haiku read the docs in 5,000-character slices. A classifier over
 enumerated candidates inherits Opus's own page size; a small generative model substitutes its habits.
 
-## Act 4: a longer task, live if the network is kind (60s)
+## Act 4: Claude Code versus the agent, live if the network is kind (60s)
 
-Type the 14-page task (pick `fetch-long`, "Use the benchmark task") and run Claude + Jev. Recorded fallback:
-`loop-20260926-205230-jev` against `loop-20260926-203542-llm`: 10 turns instead of 19, 110s instead of 126s, all
-14 sources, Jev right on every one of its 9 commits.
+Mode "Claude Code vs Claude + Jev", pick `fetch-long`, "Use the benchmark task", "Start both". A real Claude Code
+session runs on the left, the agent on the right. Recorded fallback (`/?versus=race-20260926-203256-1,loop-20260926-205230-jev&speed=4`):
+Claude Code 159.5s, 25 turns, $1.42; the agent 109.8s, 10 model turns, Jev right on every one of its 9 commits, all
+14 sources on both sides. Say once that the harnesses differ; the model, prompt, server and start time do not.
 
 ## Act 5: what made it work, and what it can't do (45s)
 

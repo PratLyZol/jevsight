@@ -13,8 +13,10 @@ import argparse
 import json
 import os
 import sys
+import subprocess
 import threading
 import time
+from datetime import datetime
 import types
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -135,6 +137,152 @@ def load_run(name):
     return {"name": name, "events": events, "result": result, "answer": answer}
 
 
+# ---------- plain Claude Code on the same task (race/race.py --only baseline) ----------
+CC_PROCS: dict[str, subprocess.Popen] = {}   # race dir name -> race.py process started from the UI
+
+
+def _iso(ts):
+    return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp() if ts else None
+
+
+def cc_events(run_dir):
+    """A Claude Code session's stream file as timeline events with seconds since it started."""
+    path = os.path.join(run_dir, "baseline.stream.jsonl")
+    if not os.path.isfile(path):
+        return []
+    lines = [l for l in open(path) if l.strip()]
+    times = {}
+    try:
+        for l in open(os.path.join(run_dir, "baseline.times.jsonl")):
+            if l.strip():
+                r = json.loads(l)
+                times[r["line"]] = r["t"]
+    except OSError:
+        pass
+    start_abs, events, pending = None, [], {}
+    for i, l in enumerate(lines):
+        try:
+            e = json.loads(l)
+        except ValueError:
+            continue
+        t = times.get(i)
+        ts = _iso(e.get("timestamp")) if isinstance(e.get("timestamp"), str) else None
+        if start_abs is None and ts is not None and t is not None:
+            start_abs = ts - t
+        if t is None and ts is not None and start_abs is not None:
+            t = ts - start_abs
+        if t is None:
+            t = events[-1]["t"] if events else 0.0
+        t = round(t, 3)
+        typ = e.get("type")
+        msg = e.get("message") if isinstance(e.get("message"), dict) else {}
+        content = msg.get("content") if isinstance(msg.get("content"), list) else []
+        if typ == "assistant":
+            for b in content:
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "text" and (b.get("text") or "").strip() and e.get("parent_tool_use_id") is None:
+                    events.append({"kind": "narration", "t": t, "text": b["text"][:600]})
+                elif b.get("type") == "tool_use":
+                    name = b.get("name") or ""
+                    if name.startswith("mcp__"):
+                        ev = {"kind": "call", "t": t, "id": b.get("id"), "tool": name.split("__", 2)[-1], "args": b.get("input") or {}}
+                        events.append(ev)
+                        pending[b.get("id")] = ev
+        elif typ == "user":
+            for b in content:
+                if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") in pending:
+                    call = pending.pop(b["tool_use_id"])
+                    c = b.get("content")
+                    text = c if isinstance(c, str) else " ".join(x.get("text", "") for x in c if isinstance(x, dict)) if isinstance(c, list) else ""
+                    events.append({"kind": "result", "t": t, "id": call["id"], "tool": call["tool"], "wait": round(t - call["t"], 3),
+                                   "chars": len(text), "error": bool(b.get("is_error"))})
+        elif typ == "result":
+            u = e.get("usage") or {}
+            try:
+                answer = open(os.path.join(run_dir, "baseline.answer.md")).read()
+            except OSError:
+                answer = ""
+            events.append({"kind": "done", "t": round(e.get("duration_ms", 0) / 1000, 3), "num_turns": e.get("num_turns"),
+                           "cost_usd": e.get("total_cost_usd"), "output_tokens": u.get("output_tokens"), "answer": answer,
+                           "input_tokens": (u.get("input_tokens") or 0) + (u.get("cache_creation_input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)})
+    return events
+
+
+def cc_running(name):
+    p = CC_PROCS.get(name)
+    return p is not None and p.poll() is None
+
+
+def load_cc(name):
+    if "/" in name or ".." in name or not name.startswith("race-"):
+        raise ValueError("bad run name")
+    d = os.path.join(RUNS_DIR, name)
+    try:
+        task = open(os.path.join(d, "prompt.txt")).read()
+    except OSError:
+        task = ""
+    events = [{"kind": "start", "t": 0.0, "task": task[:2000]}] + cc_events(d)
+    return {"name": name, "task": task, "running": cc_running(name), "events": events}
+
+
+def list_cc():
+    """Claude Code sessions recorded by race.py (their baseline side), newest first."""
+    out = []
+    if not os.path.isdir(RUNS_DIR):
+        return out
+    for n in sorted(os.listdir(RUNS_DIR), reverse=True):
+        d = os.path.join(RUNS_DIR, n)
+        if not n.startswith("race-") or not os.path.isfile(os.path.join(d, "baseline.stream.jsonl")):
+            continue
+        try:
+            task = open(os.path.join(d, "prompt.txt")).read().strip()
+        except OSError:
+            task = ""
+        app = next((k for k, v in MCP_APPS.items() if v["prompt"].strip() == task), "custom")
+        done = None
+        for l in reversed(open(os.path.join(d, "baseline.stream.jsonl")).readlines()[-3:]):
+            try:
+                e = json.loads(l)
+            except ValueError:
+                continue
+            if e.get("type") == "result":
+                done = e
+                break
+        calls = sum(1 for l in open(os.path.join(d, "baseline.stream.jsonl")) if '"name": "mcp__' in l or '"name":"mcp__' in l)
+        out.append({"name": n, "app": app, "running": cc_running(n), "seconds": round(done["duration_ms"] / 1000, 1) if done else None,
+                    "turns": done.get("num_turns") if done else None, "calls": calls, "cost_usd": done.get("total_cost_usd") if done else None,
+                    "task": task[:120]})
+    return out
+
+
+def start_versus(body):
+    """Plain Claude Code and the Claude + Jev loop on the same task, started together."""
+    app = body.get("app") or "fetch"
+    if app not in MCP_APPS:
+        raise ValueError("unknown app %r" % app)
+    task = (body.get("task") or "").strip()
+    before = set(os.listdir(RUNS_DIR)) if os.path.isdir(RUNS_DIR) else set()
+    cmd = [sys.executable, os.path.join(ROOT, "race", "race.py"), "--app", app, "--only", "baseline", "--no-ui", "--runs-dir", RUNS_DIR]
+    if task and task != MCP_APPS[app]["prompt"].strip():
+        cmd += ["--prompt", task]
+    log = open(os.path.join(RUNS_DIR, "claude-code-ui.log"), "a")
+    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+    name = None
+    for _ in range(100):
+        time.sleep(0.2)
+        new = [n for n in os.listdir(RUNS_DIR) if n.startswith("race-") and n not in before and os.path.isdir(os.path.join(RUNS_DIR, n))]
+        if new:
+            name = sorted(new)[-1]
+            break
+    if name is None:
+        proc.kill()
+        raise ValueError("race.py did not start; see %s" % os.path.join(RUNS_DIR, "claude-code-ui.log"))
+    CC_PROCS[name] = proc
+    job = start_job({"task": task, "app": app, "drivers": ["jev"], "threshold": body.get("threshold", 0.4)})
+    return {"cc": name, "job": job.id}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quiet
         pass
@@ -176,6 +324,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(list_runs())
             elif u.path == "/api/run":
                 self.send_json(load_run(q.get("name", [""])[0]))
+            elif u.path == "/api/cc":
+                self.send_json(load_cc(q.get("name", [""])[0]))
+            elif u.path == "/api/ccruns":
+                self.send_json(list_cc())
             elif u.path == "/api/events":
                 self.stream(q.get("job", [""])[0])
             else:
@@ -193,6 +345,10 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("ANTHROPIC_API_KEY is not set (add it to .env)")
                 job = start_job(body)
                 self.send_json({"job": job.id})
+            elif u.path == "/api/versus":
+                if not os.environ.get("ANTHROPIC_API_KEY"):
+                    raise ValueError("ANTHROPIC_API_KEY is not set (add it to .env)")
+                self.send_json(start_versus(body))
             else:
                 self.send_json({"error": "not found"}, 404)
         except ValueError as e:
